@@ -4,17 +4,20 @@
 
 **A lightweight, high-performance voice overlay tool for TeamSpeak 6.**
 
+<!-- 下载按钮 / Download Button -->
+[![Download Latest](https://img.shields.io/github/v/release/beka2nt/TS6-SpeakerOverlay?label=Download%20EXE&style=for-the-badge&color=orange)](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest)
+
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
-<!-- 语言切换按钮 / Language Switch -->
+<!-- 语言切换 / Language Switch -->
 <p align="center">
   <a href="#english">
-    <img src="https://img.shields.io/badge/Language-English-blue?style=for-the-badge" alt="English">
+    <img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English">
   </a>
   <a href="#chinese">
-    <img src="https://img.shields.io/badge/语言-中文-red?style=for-the-badge" alt="Chinese">
+    <img src="https://img.shields.io/badge/语言-中文-red?style=flat-square" alt="Chinese">
   </a>
 </p>
 
@@ -46,22 +49,21 @@
 
 ###  How to Use
 
-1. **Preparation**:
-   - Ensure **TeamSpeak 6** client is running.
-   - Go to TS6 Settings and ensure **Remote Apps** is enabled (usually on by default).
+1. **Download**:
+   - Click the **Download EXE** badge above, or go to [Releases](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest) to get \TS6-SpeakerOverlay.exe\.
 
-2. **Run the Program**:
-   - Download and run \TS6-SpeakerOverlay.exe\.
+2. **Run**:
+   - Run the EXE file. 
    - **First Time Only**: TS6 will prompt a connection request. Click **"Allow"**.
 
 3. **Controls**:
-   - **[Unlock Mode]**: Default on startup. Click and hold the black background to drag the overlay to your desired position.
-   - **[Lock Mode]**: Once positioned, press **\Ctrl + L\**. The window will lock in place and enable **Click-Through** mode. You can now play your game.
+   - **[Unlock Mode]**: Default on startup. Click and hold the black background to drag the overlay.
+   - **[Lock Mode]**: Press **\Ctrl + L\**. The window will lock and enable **Click-Through**.
 
 ###  Notes
 
-- The program generates an \pikey.txt\ file in its directory to save your authorization. **Do not share this file.**
-- If you move the EXE to a new folder and it fails to connect, simply delete the old \pikey.txt\ and re-authorize.
+- The program generates an \pikey.txt\ file. **Do not share this file.**
+- If you move the EXE and it fails to connect, delete the old \pikey.txt\ and re-authorize.
 
 ###  License
 
@@ -93,13 +95,11 @@ MIT License
 
 ###  如何使用
 
-1. **准备工作**：
-   - 确保安装并运行了 **TeamSpeak 6** 客户端。
-   - 在 TS6 设置中开启 **Remote Apps** 功能（通常默认开启）。
+1. **下载程序**：
+   - 点击顶部的 **Download EXE** 按钮，或前往 [Releases](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest) 页面下载 \TS6-SpeakerOverlay.exe\。
 
-2. **运行程序**：
-   - 下载并运行 \TS6-SpeakerOverlay.exe\。
-   - **首次运行**时，TS6 客户端会弹出请求连接的窗口，请点击 **"允许 (Allow)"**。
+2. **首次运行**：
+   - 双击运行程序。TS6 客户端会弹出请求连接的窗口，请点击 **"允许 (Allow)"**。
 
 3. **操作说明**：
    - **[解锁模式]**：启动后默认为解锁状态，按住黑色背景可随意拖拽位置。
