@@ -1,0 +1,24 @@
+﻿# 忽略编译输出
+bin/
+obj/
+
+# 忽略用户配置和密钥 (关键!)
+apikey.txt
+*.user
+
+# 忽略 VS 临时文件
+.vs/
+*.suo
+*.user
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Oo]bj/
