@@ -1,12 +1,13 @@
-﻿<div align="center">
+<div align="center">
 
 # TS6 Speaker Overlay
 
 **A lightweight, high-performance voice overlay tool for TeamSpeak 6.**
 
-<!-- 下载按钮 -->
+<!-- Downloads -->
 [![Download Latest](https://img.shields.io/github/v/release/beka2nt/TS6-SpeakerOverlay?label=Download%20EXE&style=for-the-badge&color=orange)](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest)
 
+<!-- Status -->
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
@@ -26,56 +27,57 @@
 
 <a id="english"></a>
 
-##  English Description
+## 🇬🇧 English Description
 
-###  Key Features (v1.1)
+### ✨ Key Features
 
-- **True Click-Through**: The overlay acts like "air". Mouse clicks pass directly through to the game.
-- **System Tray Support**: Minimizes to the system tray. Right-click to Lock/Unlock or Exit.
-- **Visual Notifications**: Shows a popup bubble when users join or leave your channel.
-- **Status Indicators**: New vector icons for Input Muted (Mic), Output Muted (Sound), and Away status.
-- **Ultra-Low Resource**: Built with **.NET 10 Native AOT**. Minimal memory footprint.
-- **Seamless Auto-Connect**: Auto-saves API Key and reconnects silently.
+- **Mouse Click-Through**: Implements low-level Windows API to allow mouse events to pass directly to the game application, ensuring uninterrupted gameplay.
+- **System Tray Integration**: Supports minimizing to the system tray. Includes a context menu for quick state management (Lock/Unlock/Exit).
+- **Event Notifications**: Visual toast notifications provide immediate feedback when users join or leave the current channel.
+- **Status Visualization**: Utilizes vector icons to display real-time statuses including Talking, Input Muted, Output Muted, and Away.
+- **Native AOT Architecture**: Compiled with **.NET 10 Native AOT**, eliminating the need for heavy browser engines (Electron) and optimizing memory usage.
+- **Auto-Connection**: Automatically persists authorization credentials locally to establish a connection with the TeamSpeak 6 client upon startup.
 
-###  How to Use
+### 📦 How to Use
 
-1. **Download**: Click the **Download EXE** badge above.
-2. **Run**: Run `TS6-SpeakerOverlay.exe`. (Allow connection in TS6 client for the first time).
+1. **Download**: Click the **Download EXE** badge above or visit the [Releases](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest) page.
+2. **Launch**: Run `TS6-SpeakerOverlay.exe`. A connection request will appear in the TeamSpeak 6 client; click **"Allow"**.
 3. **Controls**:
-   - **Unlock**: Default state. Drag to move.
-   - **Lock**: Press **`Ctrl + L`** or use the Tray Icon menu.
-   - **Tray**: Closing the window minimizes it to the tray. Right-click the tray icon to exit fully.
+   - **Unlock Mode**: Default state. Allows window positioning via drag-and-drop.
+   - **Lock Mode**: Press **`Ctrl + L`** or use the tray menu to lock the window position and enable click-through mode.
+   - **Exit**: Right-click the system tray icon and select "Exit".
 
-###  License
+### 📄 License
 MIT License
 
 ---
 
 <a id="chinese"></a>
 
-##  中文说明 (Chinese)
+## 🇨🇳 中文说明 (Chinese)
 
-###  核心功能 (v1.1 更新)
+### ✨ 核心功能
 
-- **鼠标穿透**：悬浮窗如同空气一般，鼠标点击直接穿透至下方，不干扰操作。
-- **托盘最小化**：点击关闭按钮不再退出，而是隐藏到系统托盘。右键托盘图标可快速锁定/解锁。
-- **进出频道通知**：当有人进入或离开你的频道时，顶部会弹出渐入渐出的气泡提示。
-- **详细状态显示**：全新的矢量图标，实时显示成员的 **闭麦、静音、离开** 状态。
-- **极低资源占用**：基于 **.NET 10** 编译，无浏览器内核，内存占用极低。
-- **自动无感连接**：首次授权后自动保存 Key，后续启动自动重连 TeamSpeak 6。
+- **鼠标事件穿透**：通过 Windows API 实现窗口透明与点击穿透，确保覆盖层在游戏运行时不拦截鼠标指令，维持正常游戏操作。
+- **系统托盘集成**：支持最小化至系统托盘运行。提供右键菜单，可快速切换锁定状态或退出程序。
+- **频道动态通知**：内置非阻塞式通知系统，当成员进入或离开当前频道时，提供视觉反馈。
+- **多状态可视化**：采用矢量图标实时显示成员状态，包括正在说话、麦克风禁用、声音禁用及离开状态。
+- **原生 AOT 编译**：基于 **.NET 10** 构建，不依赖 Electron 等 Web 容器，显著降低内存占用与启动时间。
+- **自动连接管理**：首次授权后自动在本地保存 API 凭证，后续启动将自动连接至 TeamSpeak 6 客户端。
 
-###  如何使用
+### 📦 使用指南
 
-1. **下载程序**：点击顶部的 **Download EXE** 按钮下载最新版本。
-2. **首次运行**：双击运行。TS6 客户端会弹出请求，请点击 **"允许 (Allow)"**。
-3. **操作说明**：
-   - **[解锁模式]**：启动后默认为解锁状态，拖拽黑色背景调整位置。
-   - **[锁定模式]**：按下 **`Ctrl + L`** 或在托盘图标右键选择锁定。
-   - **[退出程序]**：点击窗口右上角的 X 会最小化到托盘。要彻底退出，请在托盘图标上右键选择退出程序。
+1. **获取程序**：点击顶部的 **Download EXE** 按钮下载最新版本可执行文件。
+2. **首次配置**：运行程序后，TeamSpeak 6 客户端将弹出连接请求，请点击 **"允许 (Allow)"**。
+3. **操作交互**：
+   - **[调整位置]**：程序启动时默认为解锁状态，可拖拽黑色背景区域调整显示位置。
+   - **[锁定模式]**：位置调整完毕后，按下 **`Ctrl + L`** 或在托盘菜单选择“锁定”。此时窗口将固定并开启鼠标穿透。
+   - **[退出程序]**：关闭窗口将默认最小化至托盘。如需彻底退出，请在托盘图标右键菜单中选择“退出程序”。
 
-###  注意事项
-- 程序会在目录下生成 `apikey.txt` 保存授权信息，请勿分享给他人。
-- 建议以 **管理员身份运行** 以确保在《猎杀：对决》等 EAC 反作弊游戏中正常置顶。
+### ⚠️ 注意事项
+- 程序运行后会在同级目录下生成 `apikey.txt` 用于存储授权信息，请妥善保管，勿发送给他人。
+- 若在移动 EXE 文件后无法自动连接，请删除旧的 `apikey.txt` 并重新进行授权流程。
+- 建议以 **管理员身份运行**，以确保在部分启用反作弊系统（如 EAC）的游戏中能正常置顶显示。
 
-###  开源协议
+### 📄 开源协议
 本项目基于 MIT License 开源。
