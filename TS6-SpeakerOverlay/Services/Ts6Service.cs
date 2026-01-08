@@ -1,13 +1,14 @@
 using System;
 using System.IO;
-using System.Linq; // 必须引用
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text.Json;
-using System.Text.Json.Nodes; // 必须引用
+using System.Text.Json.Nodes;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Websocket.Client;
-using TS6_SpeakerOverlay.Models; // 必须引用
+using TS6_SpeakerOverlay.Models;
+using System.Collections.Generic;
 
 namespace TS6_SpeakerOverlay.Services
 {
@@ -17,25 +18,24 @@ namespace TS6_SpeakerOverlay.Services
         private const string KEY_FILE = "apikey.txt"; 
         private WebsocketClient _client;
         private string _savedApiKey = "";
+        
+        // 保存当前我的频道ID
+        private string _myChannelId = ""; 
 
-        // 事件定义
         public event Action<List<User>, string>? OnChannelListUpdated;
         public event Action<int, bool>? OnTalkStatusChanged;
+        public event Action<int, bool?, bool?, bool?>? OnUserPropertiesChanged;
+        
+        // 新增：通知 ViewModel 有人移动了 (clientId, newChannelId, oldChannelId)
+        public event Action<int, string, string>? OnClientMoved;
 
         public Ts6Service()
         {
             LoadApiKey(); 
-
             var factory = new Func<ClientWebSocket>(() => new ClientWebSocket());
             _client = new WebsocketClient(new Uri(URL), factory);
             _client.ReconnectTimeout = TimeSpan.FromSeconds(5);
-            
-            _client.ReconnectionHappened.Subscribe(info =>
-            {
-                Console.WriteLine($"[WS] 🟢 已连接 ({info.Type})");
-                SendAuth();
-            });
-
+            _client.ReconnectionHappened.Subscribe(info => SendAuth());
             _client.MessageReceived.Subscribe(msg => HandleMessage(msg.Text));
         }
 
@@ -43,30 +43,19 @@ namespace TS6_SpeakerOverlay.Services
 
         private void LoadApiKey()
         {
-            if (File.Exists(KEY_FILE))
-            {
-                _savedApiKey = File.ReadAllText(KEY_FILE).Trim();
-                Console.WriteLine($"[Config] 读取到保存的 Key: {_savedApiKey}");
-            }
+            if (File.Exists(KEY_FILE)) _savedApiKey = File.ReadAllText(KEY_FILE).Trim();
         }
 
         private void SendAuth()
         {
-            Console.WriteLine("[WS] 📤 发送认证...");
             var auth = new AuthRequest();
-            if (!string.IsNullOrEmpty(_savedApiKey))
-            {
-                auth.Payload.Content.ApiKey = _savedApiKey;
-            }
-            
-            string json = JsonSerializer.Serialize(auth);
-            _client.Send(json);
+            if (!string.IsNullOrEmpty(_savedApiKey)) auth.Payload.Content.ApiKey = _savedApiKey;
+            _client.Send(JsonSerializer.Serialize(auth));
         }
 
         private void HandleMessage(string? json)
         {
             if (string.IsNullOrEmpty(json)) return;
-
             try 
             {
                 var node = JsonNode.Parse(json);
@@ -74,85 +63,103 @@ namespace TS6_SpeakerOverlay.Services
 
                 switch (type)
                 {
-                    case "auth":
-                        HandleAuthResponse(node);
-                        break;
-                    case "talkStatusChanged":
-                        HandleTalkStatus(node);
-                        break;
+                    case "auth": HandleAuthResponse(node); break;
+                    case "talkStatusChanged": HandleTalkStatus(node); break;
+                    case "clientPropertiesUpdated": HandlePropertiesUpdated(node); break;
+                    // 新增：监听移动
+                    case "clientMoved": HandleClientMoved(node); break;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Error] 解析失败: {ex.Message}");
-            }
+            catch { /* Ignore */ }
         }
 
-        // --- 这里是刚才修改过的地方 ---
         private void HandleAuthResponse(JsonNode? node)
         {
             var payload = node?["payload"];
             if (payload == null) return;
 
-            // 1. 保存 Key
             var newKey = payload["apiKey"]?.ToString();
             if (!string.IsNullOrEmpty(newKey) && newKey != _savedApiKey)
             {
                 _savedApiKey = newKey;
                 File.WriteAllText(KEY_FILE, newKey);
-                Console.WriteLine("[Auth] ✅ 新 Key 已保存。");
             }
 
-            // 2. 解析连接信息
-            var connections = payload["connections"]?.AsArray();
-            if (connections == null || connections.Count == 0) return;
+            var conn = payload["connections"]?.AsArray().FirstOrDefault();
+            if (conn == null) return;
 
-            var conn0 = connections[0];
-            int myClientId = conn0?["clientId"]?.GetValue<int>() ?? 0;
-            
-            // 3. 解析用户列表
-            var clientInfos = conn0?["clientInfos"]?.AsArray();
+            int myClientId = conn["clientId"]?.GetValue<int>() ?? 0;
+            var clientInfos = conn["clientInfos"]?.AsArray();
             if (clientInfos == null) return;
 
             var allUsers = new List<User>();
-            string myChannelId = "";
 
             foreach (var client in clientInfos)
             {
                 int id = client["id"]?.GetValue<int>() ?? 0;
-                
-                // === 关键修正：从 properties 获取 nickname ===
-                string name = client["properties"]?["nickname"]?.ToString() ?? "Unknown";
-                // ==========================================
-
+                var props = client["properties"];
                 string chId = client["channelId"]?.ToString() ?? "";
-                bool isTalking = client["properties"]?["flagTalking"]?.GetValue<bool>() ?? false;
 
-                if (id == myClientId) myChannelId = chId;
+                if (id == myClientId) _myChannelId = chId; // 更新我的频道
 
                 allUsers.Add(new User 
                 { 
                     ClientId = id,
-                    Name = name,
+                    Name = props?["nickname"]?.ToString() ?? "Unknown",
                     ChannelId = chId, 
-                    IsTalking = isTalking
+                    IsTalking = props?["flagTalking"]?.GetValue<bool>() ?? false,
+                    IsInputMuted = props?["inputMuted"]?.GetValue<bool>() ?? false,
+                    IsOutputMuted = props?["outputMuted"]?.GetValue<bool>() ?? false,
+                    IsAway = props?["away"]?.GetValue<bool>() ?? false
                 });
             }
-
-            Console.WriteLine($"[Info] 我 ({myClientId}) 在频道: {myChannelId}, 共有 {allUsers.Count} 人");
-            OnChannelListUpdated?.Invoke(allUsers, myChannelId);
+            OnChannelListUpdated?.Invoke(allUsers, _myChannelId);
         }
 
-        private void HandleTalkStatus(JsonNode? node)
+        private void HandleClientMoved(JsonNode? node)
         {
             var payload = node?["payload"];
             if (payload == null) return;
 
             int clientId = payload["clientId"]?.GetValue<int>() ?? 0;
-            int status = payload["status"]?.GetValue<int>() ?? 0;
-            bool isTalking = (status == 1); 
+            string newChannelId = payload["newChannelId"]?.ToString() ?? "";
+            string oldChannelId = payload["oldChannelId"]?.ToString() ?? "";
 
-            OnTalkStatusChanged?.Invoke(clientId, isTalking);
+            // 如果是我自己移动了，更新记录
+            // 注意：这里简化处理，如果是我移动，通常会触发全量刷新或需要特殊处理
+            // 这里主要抛出事件给 UI 判断
+            
+            OnClientMoved?.Invoke(clientId, newChannelId, oldChannelId);
+        }
+
+        private void HandleTalkStatus(JsonNode? node)
+        {
+            var payload = node?["payload"];
+            int clientId = payload?["clientId"]?.GetValue<int>() ?? 0;
+            int status = payload?["status"]?.GetValue<int>() ?? 0;
+            OnTalkStatusChanged?.Invoke(clientId, status == 1);
+        }
+
+        private void HandlePropertiesUpdated(JsonNode? node)
+        {
+            var payload = node?["payload"];
+            int clientId = payload?["clientId"]?.GetValue<int>() ?? 0;
+            var props = payload?["properties"];
+
+            if (props != null && clientId != 0)
+            {
+                bool? inputMuted = null;
+                if (props["inputMuted"] != null) inputMuted = props["inputMuted"].GetValue<bool>();
+                bool? outputMuted = null;
+                if (props["outputMuted"] != null) outputMuted = props["outputMuted"].GetValue<bool>();
+                bool? away = null;
+                if (props["away"] != null) away = props["away"].GetValue<bool>();
+
+                if (inputMuted.HasValue || outputMuted.HasValue || away.HasValue)
+                {
+                    OnUserPropertiesChanged?.Invoke(clientId, inputMuted, outputMuted, away);
+                }
+            }
         }
     }
 }

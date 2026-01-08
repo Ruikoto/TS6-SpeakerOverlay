@@ -8,9 +8,13 @@ namespace TS6_SpeakerOverlay.Models
         [ObservableProperty] private string _name = string.Empty;
         [ObservableProperty] private bool _isTalking;
         
-        // 新增：TS6 内部的用户ID
+        // --- 新增状态属性 ---
+        [ObservableProperty] private bool _isInputMuted;  // 闭麦
+        [ObservableProperty] private bool _isOutputMuted; // 关声 (耳机被ban)
+        [ObservableProperty] private bool _isAway;        // 离开/AFK
+        // ------------------
+
         [ObservableProperty] private int _clientId;
-        // 新增：用户所在的频道ID
         [ObservableProperty] private string _channelId = string.Empty;
 
         public DateTime LastTalkTime { get; set; } = DateTime.MinValue;

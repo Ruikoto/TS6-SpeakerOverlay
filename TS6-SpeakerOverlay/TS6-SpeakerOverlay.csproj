@@ -1,18 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
+<PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <RootNamespace>TS6_SpeakerOverlay</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <!-- 关键修改：强制指定根命名空间为下划线格式 -->
+    <RootNamespace>TS6_SpeakerOverlay</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="System.Text.Json" Version="10.0.1" />
     <PackageReference Include="Websocket.Client" Version="5.3.0" />
+    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+    <!-- 新增：绘图库支持 -->
+    <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
   </ItemGroup>
 
 </Project>
