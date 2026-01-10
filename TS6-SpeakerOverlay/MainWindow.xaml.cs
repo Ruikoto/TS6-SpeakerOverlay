@@ -4,9 +4,8 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using TS6_SpeakerOverlay.Helpers;
 using TS6_SpeakerOverlay.ViewModels;
-
-// [修复关键] 指定 KeyEventArgs 使用 WPF 的版本，解决 CS0104 错误
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using TS6_SpeakerOverlay.Views;
 
 namespace TS6_SpeakerOverlay
 {
@@ -17,14 +16,12 @@ namespace TS6_SpeakerOverlay
 
         public MainWindow()
         {
-            // 如果这里 InitializeComponent 还报错，先不管，修好上面两个它自己就好了
             InitializeComponent();
             this.Loaded += MainWindow_Loaded;
             this.MouseDown += MainWindow_MouseDown;
             this.Closing += MainWindow_Closing;
             this.KeyDown += MainWindow_KeyDown; 
 
-            // 暴力置顶
             _topmostTimer = new DispatcherTimer();
             _topmostTimer.Interval = TimeSpan.FromSeconds(2); 
             _topmostTimer.Tick += (s, e) => WindowHelper.ForceTopMost(this);
@@ -33,21 +30,37 @@ namespace TS6_SpeakerOverlay
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Left = 50;
-            this.Top = 50;
-
             // 初始化托盘
             _trayIcon = new TrayIconHelper(
                 this,
                 GetIsLocked,
                 Lock,
                 Unlock,
+                OpenSettings,
                 (trayIcon) => _trayIcon = trayIcon
             );
+            
+            // 注意：因为我们在 XAML 里双向绑定了 Left/Top 到 Config.WindowLeft/WindowTop
+            // 所以这里不需要手动写代码赋值，WPF 会自动把 Config 里的值应用到 Window 上
+        }
+                private void OpenSettings()
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                // 创建并显示设置窗口，传入当前的 ViewModel
+                var settingsWindow = new SettingsWindow(vm);
+                settingsWindow.Show();
+            }
         }
 
         private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
+            // 保存配置 (位置信息会自动同步到 Config 对象，只需调用 Save)
+            if (DataContext is MainViewModel vm)
+            {
+                vm.SaveConfig();
+            }
+
             if (_trayIcon == null) return;
             e.Cancel = true;
             this.Hide();
@@ -62,7 +75,6 @@ namespace TS6_SpeakerOverlay
             }
         }
 
-        // [修复] 这里现在的参数类型明确为 System.Windows.Input.KeyEventArgs
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.L && Keyboard.Modifiers == ModifierKeys.Control)

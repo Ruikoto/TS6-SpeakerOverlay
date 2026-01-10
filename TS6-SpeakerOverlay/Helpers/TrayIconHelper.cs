@@ -1,7 +1,7 @@
 using System;
-using System.Drawing; // 需要引用 System.Drawing
+using System.Drawing;
 using System.Windows;
-using System.Windows.Forms; // 需要引用 WinForms
+using System.Windows.Forms;
 using Application = System.Windows.Application;
 
 namespace TS6_SpeakerOverlay.Helpers
@@ -13,6 +13,7 @@ namespace TS6_SpeakerOverlay.Helpers
         private readonly Func<bool> _getIsLocked;
         private readonly Action _lockAction;
         private readonly Action _unlockAction;
+        private readonly Action _openSettingsAction; // [新增] 打开设置的回调
         private readonly Action<TrayIconHelper?> _setTrayIconRef;
         private bool _isExiting;
 
@@ -21,12 +22,14 @@ namespace TS6_SpeakerOverlay.Helpers
         private ToolStripMenuItem? _lockMenuItem;
         private ToolStripMenuItem? _unlockMenuItem;
 
-        public TrayIconHelper(Window mainWindow, Func<bool> getIsLocked, Action lockAction, Action unlockAction, Action<TrayIconHelper?> setTrayIconRef)
+        // [修改] 构造函数增加了 openSettingsAction
+        public TrayIconHelper(Window mainWindow, Func<bool> getIsLocked, Action lockAction, Action unlockAction, Action openSettingsAction, Action<TrayIconHelper?> setTrayIconRef)
         {
             _mainWindow = mainWindow;
             _getIsLocked = getIsLocked;
             _lockAction = lockAction;
             _unlockAction = unlockAction;
+            _openSettingsAction = openSettingsAction;
             _setTrayIconRef = setTrayIconRef;
             InitializeTrayIcon();
             UpdateTrayIcon();
@@ -41,7 +44,6 @@ namespace TS6_SpeakerOverlay.Helpers
                 Text = "TS6 Speaker Overlay"
             };
 
-            // 左键点击切换锁定状态
             _notifyIcon.Click += (_, e) =>
             {
                 if (e is MouseEventArgs { Button: MouseButtons.Left })
@@ -53,6 +55,10 @@ namespace TS6_SpeakerOverlay.Helpers
             };
 
             var contextMenu = new ContextMenuStrip();
+
+            // [新增] 设置菜单
+            var settingsItem = new ToolStripMenuItem("设置 (Settings)");
+            settingsItem.Click += (_, _) => _openSettingsAction.Invoke();
 
             _showMenuItem = new ToolStripMenuItem("显示");
             _showMenuItem.Click += (_, _) => { ShowWindow(); UpdateTrayIcon(); };
@@ -69,6 +75,8 @@ namespace TS6_SpeakerOverlay.Helpers
             var exitMenuItem = new ToolStripMenuItem("退出程序");
             exitMenuItem.Click += (_, _) => ExitApplication();
 
+            contextMenu.Items.Add(settingsItem); // 加入菜单
+            contextMenu.Items.Add(new ToolStripSeparator());
             contextMenu.Items.Add(_showMenuItem);
             contextMenu.Items.Add(_hideMenuItem);
             contextMenu.Items.Add(new ToolStripSeparator());
@@ -83,7 +91,6 @@ namespace TS6_SpeakerOverlay.Helpers
 
         private Icon CreateIcon(Color color)
         {
-            // 动态绘制一个圆形图标
             var bitmap = new Bitmap(16, 16);
             using (var g = Graphics.FromImage(bitmap))
             {
@@ -112,7 +119,7 @@ namespace TS6_SpeakerOverlay.Helpers
             }
             else if (isLocked)
             {
-                iconColor = Color.FromArgb(79, 205, 142); // Ruikoto 的薄荷绿
+                iconColor = Color.FromArgb(79, 205, 142);
                 _notifyIcon.Text = "TS6 Overlay - 已锁定";
             }
             else
@@ -131,12 +138,7 @@ namespace TS6_SpeakerOverlay.Helpers
             if (_unlockMenuItem != null) _unlockMenuItem.Enabled = isLocked;
         }
 
-        private void ShowWindow()
-        {
-            _mainWindow.Show();
-            _mainWindow.Activate();
-        }
-
+        private void ShowWindow() { _mainWindow.Show(); _mainWindow.Activate(); }
         private void HideWindow() => _mainWindow.Hide();
 
         private void ExitApplication()

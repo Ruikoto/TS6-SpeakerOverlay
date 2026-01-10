@@ -15,6 +15,9 @@ namespace TS6_SpeakerOverlay.ViewModels
         public ObservableCollection<User> Users { get; } = new();
         public ObservableCollection<Notification> Notifications { get; } = new();
         
+        // 新增：配置对象，供界面绑定
+        public AppConfig Config { get; }
+
         private readonly Ts6Service _tsService;
         private string _currentChannelId = ""; 
 
@@ -22,12 +25,14 @@ namespace TS6_SpeakerOverlay.ViewModels
 
         public MainViewModel()
         {
+            // 1. 加载配置
+            Config = ConfigService.Load();
+
             _tsService = new Ts6Service();
             
             _tsService.OnChannelListUpdated += (allUsers, myChannelId) => 
             {
                 _currentChannelId = myChannelId;
-                // [修复] 明确指定 System.Windows.Application
                 System.Windows.Application.Current.Dispatcher.Invoke(() => 
                 {
                     Users.Clear();
@@ -38,7 +43,6 @@ namespace TS6_SpeakerOverlay.ViewModels
 
             _tsService.OnTalkStatusChanged += (clientId, isTalking) =>
             {
-                // [修复] 明确指定 System.Windows.Application
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     var user = Users.FirstOrDefault(u => u.ClientId == clientId);
@@ -48,7 +52,6 @@ namespace TS6_SpeakerOverlay.ViewModels
 
             _tsService.OnUserPropertiesChanged += (clientId, inMute, outMute, away) =>
             {
-                // [修复] 明确指定 System.Windows.Application
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     var user = Users.FirstOrDefault(u => u.ClientId == clientId);
@@ -63,7 +66,6 @@ namespace TS6_SpeakerOverlay.ViewModels
 
             _tsService.OnClientMoved += (clientId, newCh, oldCh) => 
             {
-                // [修复] 明确指定 System.Windows.Application
                 System.Windows.Application.Current.Dispatcher.Invoke(() => 
                 {
                     if (newCh == _currentChannelId)
@@ -88,6 +90,9 @@ namespace TS6_SpeakerOverlay.ViewModels
 
         private async void ShowNotification(string msg, string color, string icon)
         {
+            // 2. 判断配置开关：如果用户关了通知，直接返回
+            if (!Config.EnableNotifications) return;
+
             var note = new Notification { Message = msg, Color = color, Icon = icon };
             Notifications.Add(note);
             await Task.Delay(3000);
@@ -100,6 +105,12 @@ namespace TS6_SpeakerOverlay.ViewModels
             IsOverlayLocked = !IsOverlayLocked;
             if (IsOverlayLocked) WindowHelper.EnableClickThrough(window);
             else WindowHelper.DisableClickThrough(window);
+        }
+        
+        // 新增：保存配置的方法（给 MainWindow 关闭时调用）
+        public void SaveConfig()
+        {
+            ConfigService.Save(Config);
         }
     }
 }

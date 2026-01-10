@@ -4,7 +4,6 @@
 
 **A lightweight, high-performance voice overlay tool for TeamSpeak 6.**
 
-<!-- 下载按钮 -->
 [![Download Latest](https://img.shields.io/github/v/release/beka2nt/TS6-SpeakerOverlay?label=Download%20EXE&style=for-the-badge&color=orange)](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest)
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
@@ -26,56 +25,52 @@
 
 <a id="english"></a>
 
-##  English Description
+## 🇬🇧 English Description
 
-###  Key Features (v1.1)
+### 🚀 What's New in v1.2.0
+- **Settings GUI**: Right-click the tray icon to open the new Settings window. Adjust Font Size, Opacity, Spacing, and Scaling in real-time.
+- **Show Only Talking**: Added an option to hide users who are not speaking (Discord-style).
+- **Avatar Size**: Customizable avatar/indicator size.
+- **Vector Icons**: Replaced text icons with high-quality vector paths for Mute/Deafen status.
 
-- **True Click-Through**: The overlay acts like "air". Mouse clicks pass directly through to the game.
-- **System Tray Support**: Minimizes to the system tray. Right-click to Lock/Unlock or Exit.
-- **Visual Notifications**: Shows a popup bubble when users join or leave your channel.
-- **Status Indicators**: New vector icons for Input Muted (Mic), Output Muted (Sound), and Away status.
-- **Ultra-Low Resource**: Built with **.NET 10 Native AOT**. Minimal memory footprint.
-- **Seamless Auto-Connect**: Auto-saves API Key and reconnects silently.
+### ✨ Key Features
+- **True Click-Through**: Passes mouse events to the game.
+- **Visual Notifications**: Toast popups when users join/leave.
+- **Ultra-Low Resource**: Native .NET 10 AOT, minimal memory usage.
+- **Auto-Connect**: Saves API Key and reconnects automatically.
 
-###  How to Use
-
+### 📦 How to Use
 1. **Download**: Click the **Download EXE** badge above.
-2. **Run**: Run `TS6-SpeakerOverlay.exe`. (Allow connection in TS6 client for the first time).
-3. **Controls**:
-   - **Unlock**: Default state. Drag to move.
-   - **Lock**: Press **`Ctrl + L`** or use the Tray Icon menu.
-   - **Tray**: Closing the window minimizes it to the tray. Right-click the tray icon to exit fully.
+2. **Run**: Launch `TS6-SpeakerOverlay.exe`. Allow connection in TS6 client.
+3. **Settings**: Right-click the tray icon -> **Settings** to customize appearance.
+4. **Lock**: Press **`Ctrl + L`** to lock position and enable click-through.
 
-###  License
+### 📄 License
 MIT License
 
 ---
 
 <a id="chinese"></a>
 
-##  中文说明 (Chinese)
+## 🇨🇳 中文说明 (Chinese)
 
-###  核心功能 (v1.1 更新)
+### 🚀 v1.2.0 重磅更新
+- **可视化设置界面**：右键托盘图标可打开设置面板。实时调整字体大小、背景透明度、列表间距和整体缩放比例。
+- **仅显示说话者**：新增“Show Only Talking”模式，自动隐藏不说话的成员，保持界面清爽。
+- **UI 全面升级**：采用高清矢量图标显示闭麦/静音/离开状态，视觉效果更佳。
+- **自定义头像**：支持调整状态指示灯（头像占位符）的大小。
 
-- ** 真正的鼠标穿透**：悬浮窗如同空气一般，鼠标点击直接穿透至下方游戏，绝不干扰操作。
-- ** 托盘最小化**：点击关闭按钮不再退出，而是隐藏到系统托盘。右键托盘图标可快速锁定/解锁。
-- ** 进出频道通知**：当有人进入或离开你的频道时，顶部会弹出渐入渐出的气泡提示。
-- ** 详细状态显示**：全新的矢量图标，实时显示成员的 **闭麦、静音、离开** 状态。
-- ** 极低资源占用**：基于 **.NET 10** 编译，无浏览器内核，内存占用极低。
-- ** 自动无感连接**：首次授权后自动保存 Key，后续启动自动重连 TeamSpeak 6。
+### ✨ 核心功能
+- **鼠标穿透**：悬浮窗不拦截点击，完美覆盖于游戏之上。
+- **进出通知**：成员进出频道时弹出气泡提示。
+- **极低占用**：原生 AOT 编译，无浏览器内核，性能极致。
+- **自动连接**：首次授权后自动保存 Key，开机即用。
 
-###  如何使用
+### 📦 使用指南
+1. **下载**：点击顶部的 **Download EXE** 下载最新版。
+2. **运行**：双击运行，在 TS6 中点击允许连接。
+3. **设置**：右键托盘图标 -> **设置 (Settings)**，可调整外观。
+4. **锁定**：按 **`Ctrl + L`** 锁定位置并开启穿透模式。
 
-1. **下载程序**：点击顶部的 **Download EXE** 按钮下载最新版本。
-2. **首次运行**：双击运行。TS6 客户端会弹出请求，请点击 **"允许 (Allow)"**。
-3. **操作说明**：
-   - **[解锁模式]**：启动后默认为解锁状态，拖拽黑色背景调整位置。
-   - **[锁定模式]**：按下 **`Ctrl + L`** 或在托盘图标右键选择锁定。
-   - **[退出程序]**：点击窗口右上角的 X 会最小化到托盘。要彻底退出，请在托盘图标上右键选择退出程序。
-
-###  注意事项
-- 程序会在目录下生成 `apikey.txt` 保存授权信息，请勿分享给他人。
-- 建议以 **管理员身份运行** 以确保在《猎杀：对决》等 EAC 反作弊游戏中正常置顶。
-
-###  开源协议
+### 📄 开源协议
 本项目基于 MIT License 开源。
