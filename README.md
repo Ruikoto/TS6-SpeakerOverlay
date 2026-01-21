@@ -61,7 +61,7 @@ A lightweight, high-performance voice overlay tool for TeamSpeak 6.
 ### 🚀 快速开始
 
 1. **下载** [最新版本](https://github.com/Ruikoto/TS6-SpeakerOverlay/releases)
-2. **运行** `TS6-SpeakerOverlay.exe`，在 TS6 弹窗中点击**"允许"**
+2. **运行** `TS6-SpeakerOverlay.exe`，在 TS6 弹窗中点击 **"允许"**
 3. **拖拽** 黑色背景调整位置
 4. **锁定** 按 `Ctrl + L` 启用鼠标穿透
 5. **退出** 通过托盘图标或退出按钮
