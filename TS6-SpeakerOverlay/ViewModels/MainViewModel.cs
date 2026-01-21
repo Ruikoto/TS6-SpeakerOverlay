@@ -18,6 +18,9 @@ namespace TS6_SpeakerOverlay.ViewModels
         // UI 绑定的用户列表
         public ObservableCollection<User> Users { get; } = [];
 
+        // 通知列表
+        public ObservableCollection<Notification> Notifications { get; } = [];
+
         [ObservableProperty]
         private bool _isOverlayLocked;
 
@@ -36,6 +39,9 @@ namespace TS6_SpeakerOverlay.ViewModels
                 {
                     RefreshUserList();
                     Console.WriteLine($"[UI] 初始化列表，我的ID: {_myClientId}, 频道: {_currentChannelId}, 人数: {Users.Count}");
+
+                    // 显示连接成功通知
+                    ShowNotification("已连接到 TeamSpeak", "#43B581", "✅");
                 });
             };
 
@@ -70,11 +76,27 @@ namespace TS6_SpeakerOverlay.ViewModels
                         _currentChannelId = newChannelId;
                         RefreshUserList();
                         Console.WriteLine($"[UI] 我切换到频道: {newChannelId}, 人数: {Users.Count}");
+
+                        // 显示频道切换通知
+                        ShowNotification($"已切换频道，当前 {Users.Count} 人", "#5E5CE6", "🔄");
                     }
                     else
                     {
-                        // 其他用户切换频道，刷新列表
+                        // 其他用户切换频道
+                        var wasInMyChannel = Users.Any(u => u.ClientId == clientId);
                         RefreshUserList();
+                        var isNowInMyChannel = Users.Any(u => u.ClientId == clientId);
+
+                        // 用户进入我的频道
+                        if (!wasInMyChannel && isNowInMyChannel && cachedUser != null)
+                        {
+                            ShowNotification($"{cachedUser.Name} 加入了频道", "#43B581", "📥");
+                        }
+                        // 用户离开我的频道
+                        else if (wasInMyChannel && !isNowInMyChannel && cachedUser != null)
+                        {
+                            ShowNotification($"{cachedUser.Name} 离开了频道", "#F04747", "📤");
+                        }
                     }
                 });
             };
@@ -88,6 +110,12 @@ namespace TS6_SpeakerOverlay.ViewModels
                     {
                         _allUsers.Add(newUser);
                         Console.WriteLine($"[UI] 新用户 {newUser.Name} 进入视野 (频道: {newUser.ChannelId})");
+
+                        // 如果新用户在我的频道，显示通知
+                        if (newUser.ChannelId == _currentChannelId)
+                        {
+                            ShowNotification($"{newUser.Name} 加入了频道", "#43B581", "📥");
+                        }
                     }
 
                     RefreshUserList();
@@ -102,6 +130,12 @@ namespace TS6_SpeakerOverlay.ViewModels
                     var cachedUser = _allUsers.FirstOrDefault(u => u.ClientId == clientId);
                     if (cachedUser != null)
                     {
+                        // 如果用户在我的频道，显示离开通知
+                        if (cachedUser.ChannelId == _currentChannelId)
+                        {
+                            ShowNotification($"{cachedUser.Name} 离开了频道", "#F04747", "📤");
+                        }
+
                         _allUsers.Remove(cachedUser);
                         Console.WriteLine($"[UI] 用户 {cachedUser.Name} 离开视野");
                     }
@@ -137,6 +171,29 @@ namespace TS6_SpeakerOverlay.ViewModels
             foreach (var u in roomUsers)
             {
                 Users.Add(u);
+            }
+        }
+
+        /// <summary>
+        /// 显示通知消息
+        /// </summary>
+        private async void ShowNotification(string message, string color, string icon)
+        {
+            var notification = new Notification
+            {
+                Message = message,
+                Color = color,
+                Icon = icon
+            };
+
+            Notifications.Add(notification);
+
+            // 3秒后自动移除通知
+            await Task.Delay(3000);
+
+            if (Notifications.Contains(notification))
+            {
+                Notifications.Remove(notification);
             }
         }
     }

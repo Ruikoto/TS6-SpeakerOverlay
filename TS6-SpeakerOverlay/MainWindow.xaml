@@ -20,11 +20,46 @@
 
 
     <Grid>
-        <!-- 背景层：解锁时显示微弱黑色，锁定(穿透)时全透明 -->
-        <Border Background="#01000000" CornerRadius="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <!-- 通知区域 -->
+        <ItemsControl ItemsSource="{Binding Notifications}" Grid.Row="0" Margin="5 5 5 0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel VerticalAlignment="Top"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="#D9000000" CornerRadius="6" Margin="0,2" Padding="12,6" BorderThickness="1" BorderBrush="#33FFFFFF">
+                        <Border.Triggers>
+                            <!-- 渐入动画 -->
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.25"/>
+                                        <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,-10,0,2" To="0,2,0,2" Duration="0:0:0.25" DecelerationRatio="0.9"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Border.Triggers>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Icon}" Foreground="{Binding Color}" FontSize="16" Margin="0,0,8,0" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Message}" Foreground="White" FontSize="13" FontWeight="Medium" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- 背景层：解锁时显示微弱黑色，锁定(穿透)时全透明 -->
+        <Border Grid.Row="1" Background="#01000000" CornerRadius="10">
             <!-- 用户列表 -->
-            <ItemsControl ItemsSource="{Binding Users}" Margin="10">
+            <ItemsControl ItemsSource="{Binding Users}" Margin="5">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border x:Name="UserCard" 
@@ -32,6 +67,8 @@
                                 CornerRadius="5" 
                                 Margin="0,2" 
                                 Padding="10,5"
+                                BorderThickness="2"
+                                BorderBrush="Transparent"
                                 HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <!-- 状态指示灯 -->
@@ -48,7 +85,6 @@
                         <DataTemplate.Triggers>
                             <!-- 说话状态：高亮 -->
                             <DataTrigger Binding="{Binding IsTalking}" Value="True">
-                                <Setter TargetName="UserCard" Property="BorderThickness" Value="2"/>
                                 <Setter TargetName="UserCard" Property="BorderBrush" Value="#4FCD8E"/>
                                 <Setter TargetName="StatusLight" Property="Fill" Value="#4FCD8E"/>
                             </DataTrigger>
@@ -56,6 +92,7 @@
                             <!-- 没说话：半透明 -->
                             <DataTrigger Binding="{Binding IsTalking}" Value="False">
                                 <Setter TargetName="UserCard" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="UserCard" Property="BorderBrush" Value="Transparent"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
@@ -64,8 +101,8 @@
         </Border>
 
         <!-- 提示文本 -->
-        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" 
-                Background="#AA000000" CornerRadius="5" Padding="5" Margin="10">
+        <Border Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                Background="#AA000000" CornerRadius="5" Padding="5" Margin="5 5 5 0">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Visibility" Value="Collapsed"/>
