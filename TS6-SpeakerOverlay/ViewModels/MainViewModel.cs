@@ -21,19 +21,25 @@ namespace TS6_SpeakerOverlay.ViewModels
         // 通知列表
         public ObservableCollection<Notification> Notifications { get; } = [];
 
-        [ObservableProperty]
-        private bool _isOverlayLocked;
+        [ObservableProperty] private bool _isOverlayLocked;
 
         public MainViewModel()
         {
             _tsService = new Ts6Service();
 
             // 监听锁定状态变化
-            PropertyChanged += (s, e) =>
+            PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(IsOverlayLocked) && IsOverlayLocked)
+                if (e.PropertyName == nameof(IsOverlayLocked))
                 {
-                    ShowNotification("已锁定，点击托盘图标可解锁", "#5E5CE6", "🔒");
+                    if (IsOverlayLocked)
+                    {
+                        ShowNotification("已锁定，点击托盘图标可解锁", "#5E5CE6", "🔒");
+                    }
+                    else
+                    {
+                        ShowNotification("已解锁", "#4FCD8E", "🔓");
+                    }
                 }
             };
 

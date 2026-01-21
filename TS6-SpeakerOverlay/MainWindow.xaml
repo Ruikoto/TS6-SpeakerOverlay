@@ -36,9 +36,11 @@
                 <Style TargetType="StackPanel">
                     <Setter Property="Opacity" Value="0"/>
                     <Style.Triggers>
+                        <!-- 锁定时隐藏但仍占据空间 -->
                         <DataTrigger Binding="{Binding IsOverlayLocked}" Value="True">
-                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Setter Property="Visibility" Value="Hidden"/>
                         </DataTrigger>
+                        <!-- 未锁定且鼠标悬停时显示 -->
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding IsOverlayLocked}" Value="False"/>
@@ -58,7 +60,7 @@
                     MouseLeftButtonDown="DragHandle_MouseDown"
                     ToolTip="拖拽移动窗口">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="⣿" Foreground="#FFAB53" FontSize="14" FontWeight="Bold" Margin="0,0,5,0"/>
+                    <TextBlock Text="⣿" Foreground="#FFAB53" FontSize="14" FontWeight="Medium" Margin="0,-3,5,0" VerticalAlignment="Center"/>
                     <TextBlock Text="拖拽" Foreground="#FFAB53" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
@@ -79,7 +81,7 @@
                     </Style>
                 </Border.Style>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🔒" Foreground="#4FCD8E" FontSize="14" FontWeight="Bold" Margin="0,0,5,0"/>
+                    <TextBlock Text="🔒" Foreground="#4FCD8E" FontSize="14" FontWeight="Medium" Margin="0,-1,5,0" VerticalAlignment="Center"/>
                     <TextBlock Text="锁定" Foreground="#4FCD8E" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
@@ -106,8 +108,8 @@
                             </EventTrigger>
                         </Border.Triggers>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Icon}" Foreground="{Binding Color}" FontSize="16" Margin="0,0,8,0" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding Message}" Foreground="White" FontSize="13" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding Icon}" Foreground="{Binding Color}" FontSize="16" Margin="0,0,8,0" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Message}" Foreground="White" FontSize="13" FontWeight="Medium" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </DataTemplate>
