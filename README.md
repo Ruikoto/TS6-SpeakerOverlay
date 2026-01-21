@@ -2,7 +2,7 @@
 
 # TS6 Speaker Overlay
 
-**为 TeamSpeak 6 打造，轻量、高性能的信息叠加层。**
+**专为 TeamSpeak 6 打造，轻量、高性能的信息叠加层。**
 
 A lightweight, high-performance voice overlay tool for TeamSpeak 6.
 
