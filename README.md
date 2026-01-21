@@ -4,9 +4,6 @@
 
 **A lightweight, high-performance voice overlay tool for TeamSpeak 6.**
 
-<!-- 下载按钮 / Download Button -->
-[![Download Latest](https://img.shields.io/github/v/release/beka2nt/TS6-SpeakerOverlay?label=Download%20EXE&style=for-the-badge&color=orange)](https://github.com/beka2nt/TS6-SpeakerOverlay/releases/latest)
-
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
