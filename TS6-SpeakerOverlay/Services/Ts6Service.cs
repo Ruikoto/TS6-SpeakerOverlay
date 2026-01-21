@@ -1,39 +1,44 @@
-using System;
 using System.IO;
-using System.Linq; // 必须引用
 using System.Net.WebSockets;
 using System.Text.Json;
-using System.Text.Json.Nodes; // 必须引用
-using System.Reactive.Linq;
-using System.Threading.Tasks;
+using System.Text.Json.Nodes;
 using Websocket.Client;
-using TS6_SpeakerOverlay.Models; // 必须引用
+using TS6_SpeakerOverlay.Models;
 
 namespace TS6_SpeakerOverlay.Services
 {
     public class Ts6Service
     {
-        private const string URL = "ws://127.0.0.1:5899"; 
-        private const string KEY_FILE = "apikey.txt"; 
-        private WebsocketClient _client;
+        private const string Url = "ws://127.0.0.1:5899";
+        private const string KeyFile = "apikey.txt";
+        private readonly WebsocketClient _client;
         private string _savedApiKey = "";
 
         // 事件定义
-        public event Action<List<User>, string>? OnChannelListUpdated;
+        public event Action<List<User>, string, int>? OnChannelListUpdated; // 参数：所有用户, 我的频道ID, 我的客户端ID
         public event Action<int, bool>? OnTalkStatusChanged;
+        public event Action<int, string>? OnClientMoved; // 用户移动到新频道
+        public event Action<User>? OnClientEnterView; // 新用户进入视野
+        public event Action<int>? OnClientLeftView; // 用户离开视野
 
         public Ts6Service()
         {
-            LoadApiKey(); 
+            LoadApiKey();
 
             var factory = new Func<ClientWebSocket>(() => new ClientWebSocket());
-            _client = new WebsocketClient(new Uri(URL), factory);
-            _client.ReconnectTimeout = TimeSpan.FromSeconds(5);
-            
+            _client = new WebsocketClient(new Uri(Url), factory);
+            _client.ReconnectTimeout = TimeSpan.FromSeconds(10); // 增加重连间隔，避免频繁重试
+            _client.ErrorReconnectTimeout = TimeSpan.FromSeconds(30); // 错误后等待更久再重连
+
             _client.ReconnectionHappened.Subscribe(info =>
             {
                 Console.WriteLine($"[WS] 🟢 已连接 ({info.Type})");
                 SendAuth();
+            });
+
+            _client.DisconnectionHappened.Subscribe(info =>
+            {
+                Console.WriteLine($"[WS] 🔴 连接断开 ({info.Type}) - 将自动重连...");
             });
 
             _client.MessageReceived.Subscribe(msg => HandleMessage(msg.Text));
@@ -43,9 +48,9 @@ namespace TS6_SpeakerOverlay.Services
 
         private void LoadApiKey()
         {
-            if (File.Exists(KEY_FILE))
+            if (File.Exists(KeyFile))
             {
-                _savedApiKey = File.ReadAllText(KEY_FILE).Trim();
+                _savedApiKey = File.ReadAllText(KeyFile).Trim();
                 Console.WriteLine($"[Config] 读取到保存的 Key: {_savedApiKey}");
             }
         }
@@ -58,8 +63,8 @@ namespace TS6_SpeakerOverlay.Services
             {
                 auth.Payload.Content.ApiKey = _savedApiKey;
             }
-            
-            string json = JsonSerializer.Serialize(auth);
+
+            var json = JsonSerializer.Serialize(auth);
             _client.Send(json);
         }
 
@@ -67,10 +72,10 @@ namespace TS6_SpeakerOverlay.Services
         {
             if (string.IsNullOrEmpty(json)) return;
 
-            try 
+            try
             {
                 var node = JsonNode.Parse(json);
-                string? type = node?["type"]?.ToString();
+                var type = node?["type"]?.ToString();
 
                 switch (type)
                 {
@@ -80,6 +85,19 @@ namespace TS6_SpeakerOverlay.Services
                     case "talkStatusChanged":
                         HandleTalkStatus(node);
                         break;
+                    case "clientMoved":
+                        HandleClientMoved(node);
+                        break;
+                    case "clientEnterView":
+                        HandleClientEnterView(node);
+                        break;
+                    case "clientLeftView":
+                        HandleClientLeftView(node);
+                        break;
+                    default:
+                        // 输出未处理的消息类型用于调试
+                        Console.WriteLine($"[WS] 未处理的消息类型: {type}");
+                        break;
                 }
             }
             catch (Exception ex)
@@ -88,59 +106,54 @@ namespace TS6_SpeakerOverlay.Services
             }
         }
 
-        // --- 这里是刚才修改过的地方 ---
         private void HandleAuthResponse(JsonNode? node)
         {
             var payload = node?["payload"];
             if (payload == null) return;
 
-            // 1. 保存 Key
+            // 保存 API Key
             var newKey = payload["apiKey"]?.ToString();
             if (!string.IsNullOrEmpty(newKey) && newKey != _savedApiKey)
             {
                 _savedApiKey = newKey;
-                File.WriteAllText(KEY_FILE, newKey);
-                Console.WriteLine("[Auth] ✅ 新 Key 已保存。");
+                File.WriteAllText(KeyFile, newKey);
+                Console.WriteLine("[Auth] ✅ 新 Key 已保存");
             }
 
-            // 2. 解析连接信息
+            // 解析连接信息
             var connections = payload["connections"]?.AsArray();
             if (connections == null || connections.Count == 0) return;
 
             var conn0 = connections[0];
-            int myClientId = conn0?["clientId"]?.GetValue<int>() ?? 0;
-            
-            // 3. 解析用户列表
+            var myClientId = conn0?["clientId"]?.GetValue<int>() ?? 0;
+
+            // 解析用户列表
             var clientInfos = conn0?["clientInfos"]?.AsArray();
             if (clientInfos == null) return;
 
             var allUsers = new List<User>();
-            string myChannelId = "";
+            var myChannelId = "";
 
             foreach (var client in clientInfos)
             {
-                int id = client["id"]?.GetValue<int>() ?? 0;
-                
-                // === 关键修正：从 properties 获取 nickname ===
-                string name = client["properties"]?["nickname"]?.ToString() ?? "Unknown";
-                // ==========================================
-
-                string chId = client["channelId"]?.ToString() ?? "";
-                bool isTalking = client["properties"]?["flagTalking"]?.GetValue<bool>() ?? false;
+                var id = client["id"]?.GetValue<int>() ?? 0;
+                var name = client["properties"]?["nickname"]?.ToString() ?? "Unknown";
+                var chId = client["channelId"]?.ToString() ?? "";
+                var isTalking = client["properties"]?["flagTalking"]?.GetValue<bool>() ?? false;
 
                 if (id == myClientId) myChannelId = chId;
 
-                allUsers.Add(new User 
-                { 
+                allUsers.Add(new User
+                {
                     ClientId = id,
                     Name = name,
-                    ChannelId = chId, 
+                    ChannelId = chId,
                     IsTalking = isTalking
                 });
             }
 
-            Console.WriteLine($"[Info] 我 ({myClientId}) 在频道: {myChannelId}, 共有 {allUsers.Count} 人");
-            OnChannelListUpdated?.Invoke(allUsers, myChannelId);
+            Console.WriteLine($"[Auth] 我的 ID: {myClientId}, 频道: {myChannelId}, 共 {allUsers.Count} 人");
+            OnChannelListUpdated?.Invoke(allUsers, myChannelId, myClientId);
         }
 
         private void HandleTalkStatus(JsonNode? node)
@@ -148,11 +161,55 @@ namespace TS6_SpeakerOverlay.Services
             var payload = node?["payload"];
             if (payload == null) return;
 
-            int clientId = payload["clientId"]?.GetValue<int>() ?? 0;
-            int status = payload["status"]?.GetValue<int>() ?? 0;
-            bool isTalking = (status == 1); 
+            var clientId = payload["clientId"]?.GetValue<int>() ?? 0;
+            var status = payload["status"]?.GetValue<int>() ?? 0;
+            var isTalking = (status == 1);
 
             OnTalkStatusChanged?.Invoke(clientId, isTalking);
+        }
+
+        private void HandleClientMoved(JsonNode? node)
+        {
+            var payload = node?["payload"];
+            if (payload == null) return;
+
+            var clientId = payload["clientId"]?.GetValue<int>() ?? 0;
+            var newChannelId = payload["newChannelId"]?.ToString() ?? "";
+
+            Console.WriteLine($"[WS] 用户 {clientId} 移动到频道: {newChannelId}");
+            OnClientMoved?.Invoke(clientId, newChannelId);
+        }
+
+        private void HandleClientEnterView(JsonNode? node)
+        {
+            var payload = node?["payload"];
+            if (payload == null) return;
+
+            var clientId = payload["clientId"]?.GetValue<int>() ?? 0;
+            var name = payload["clientNickname"]?.ToString() ?? "Unknown";
+            var channelId = payload["clientChannelId"]?.ToString() ?? "";
+
+            var newUser = new User
+            {
+                ClientId = clientId,
+                Name = name,
+                ChannelId = channelId,
+                IsTalking = false
+            };
+
+            Console.WriteLine($"[WS] 新用户进入视野: {name} (ID: {clientId})");
+            OnClientEnterView?.Invoke(newUser);
+        }
+
+        private void HandleClientLeftView(JsonNode? node)
+        {
+            var payload = node?["payload"];
+            if (payload == null) return;
+
+            var clientId = payload["clientId"]?.GetValue<int>() ?? 0;
+
+            Console.WriteLine($"[WS] 用户离开视野: {clientId}");
+            OnClientLeftView?.Invoke(clientId);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Text;
+﻿using System.Text;
 using System.Windows;
 
 namespace TS6_SpeakerOverlay;
