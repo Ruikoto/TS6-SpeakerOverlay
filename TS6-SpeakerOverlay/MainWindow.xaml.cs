@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using TS6_SpeakerOverlay.Helpers;
 using TS6_SpeakerOverlay.ViewModels;
+using Application = System.Windows.Application;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
@@ -76,11 +77,17 @@ namespace TS6_SpeakerOverlay
 
         private void LockButton_Click(object sender, MouseButtonEventArgs e)
         {
-            // 锁定按钮点击事件
             Lock();
             e.Handled = true;
         }
 
+        private void ExitButton_Click(object sender, MouseButtonEventArgs e)
+        {
+            _trayIcon?.Dispose();
+            _trayIcon = null;
+            Application.Current.Shutdown();
+            e.Handled = true;
+        }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {

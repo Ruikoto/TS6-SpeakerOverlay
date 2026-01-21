@@ -54,11 +54,10 @@
 
             <!-- 拖拽按钮 -->
             <Border x:Name="DragHandle"
-                    Background="#AA000000" CornerRadius="5" Padding="8,4" Margin="0,0,5,0"
+                    Background="#AA000000" CornerRadius="5" Padding="8,4" Margin="0,0,3,0"
                     BorderThickness="1" BorderBrush="#33FFFFFF"
                     Cursor="SizeAll"
-                    MouseLeftButtonDown="DragHandle_MouseDown"
-                    ToolTip="拖拽移动窗口">
+                    MouseLeftButtonDown="DragHandle_MouseDown">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⣿" Foreground="#FFAB53" FontSize="14" FontWeight="Medium" Margin="0,-3,5,0" VerticalAlignment="Center"/>
                     <TextBlock Text="拖拽" Foreground="#FFAB53" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
@@ -66,11 +65,10 @@
             </Border>
 
             <!-- 锁定按钮 -->
-            <Border Background="#AA000000" CornerRadius="5" Padding="8,4"
+            <Border Background="#AA000000" CornerRadius="5" Padding="8,4" Margin="0,0,3,0"
                     BorderThickness="1" BorderBrush="#33FFFFFF"
                     Cursor="Hand"
-                    MouseLeftButtonDown="LockButton_Click"
-                    ToolTip="点击锁定并启用鼠标穿透">
+                    MouseLeftButtonDown="LockButton_Click">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
@@ -83,6 +81,26 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🔒" Foreground="#4FCD8E" FontSize="14" FontWeight="Medium" Margin="0,-1,5,0" VerticalAlignment="Center"/>
                     <TextBlock Text="锁定" Foreground="#4FCD8E" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 退出按钮 -->
+            <Border Background="#AA000000" CornerRadius="5" Padding="8,4"
+                    BorderThickness="1" BorderBrush="#33FFFFFF"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="ExitButton_Click">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#CC000000"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="✖" Foreground="#FF6F4D" FontSize="14" FontWeight="Medium" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="退出" Foreground="#FF6F4D" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>
