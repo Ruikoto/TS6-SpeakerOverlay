@@ -12,14 +12,6 @@ A lightweight, high-performance voice overlay tool for TeamSpeak 6.
 [![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
----
-
-### 🎯 Original Author
-
-**[beka2nt](https://github.com/beka2nt)** - [Original Repository](https://github.com/beka2nt/TS6-SpeakerOverlay)
-
----
-
 <!-- 语言切换 / Language Switch -->
 <p align="center">
   <a href="#chinese">
@@ -29,6 +21,12 @@ A lightweight, high-performance voice overlay tool for TeamSpeak 6.
     <img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English">
   </a>
 </p>
+
+---
+
+### 🎯 Original Author
+
+**[beka2nt](https://github.com/beka2nt)** - [Original Repository](https://github.com/beka2nt/TS6-SpeakerOverlay)
 
 </div>
 
