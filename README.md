@@ -2,7 +2,9 @@
 
 # TS6 Speaker Overlay
 
-**A lightweight, high-performance voice overlay tool for TeamSpeak 6.**
+**为 TeamSpeak 6 打造，轻量、高性能的信息叠加层。**
+
+A lightweight, high-performance voice overlay tool for TeamSpeak 6.
 
 [![GitHub Release](https://img.shields.io/github/v/release/Ruikoto/TS6-SpeakerOverlay?style=for-the-badge&label=Download&color=%2379a206)](https://github.com/Ruikoto/TS6-SpeakerOverlay/releases)
 
@@ -20,11 +22,11 @@
 
 <!-- 语言切换 / Language Switch -->
 <p align="center">
-  <a href="#english">
-    <img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English">
-  </a>
   <a href="#chinese">
     <img src="https://img.shields.io/badge/语言-中文-red?style=flat-square" alt="Chinese">
+  </a>
+  <a href="#english">
+    <img src="https://img.shields.io/badge/Language-English-blue?style=flat-square" alt="English">
   </a>
 </p>
 
