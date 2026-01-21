@@ -43,20 +43,87 @@ namespace TS6_SpeakerOverlay.ViewModels
                 }
             };
 
+            // 订阅事件：连接成功
+            _tsService.OnConnected += () =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ShowNotification("正在连接到 TeamSpeak...", "#5E5CE6", "🔄");
+                    Users.Clear();
+                    Users.Add(new User { Name = "等待 TS6 响应..." });
+                });
+            };
+
+            // 订阅事件：连接断开
+            _tsService.OnDisconnected += () =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ShowNotification("连接断开，正在重连...", "#F04747", "⚠️");
+
+                    _allUsers.Clear();
+                    _currentChannelId = "";
+                    _myClientId = 0;
+                    Users.Clear();
+                    Users.Add(new User { Name = "正在重连 TS6..." });
+                });
+            };
+
+            // 订阅事件：TS6 开始连接服务器
+            _tsService.OnServerConnecting += () =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ShowNotification("正在连接服务器...", "#5E5CE6", "🔄");
+
+                    // Clear user list, keep myClientId to identify ourselves in clientMoved events
+                    _allUsers.Clear();
+                    _currentChannelId = "";
+                    Users.Clear();
+                    Users.Add(new User { Name = "正在加载..." });
+                });
+            };
+
             // 订阅事件：初始化用户列表
             _tsService.OnChannelListUpdated += (allUsers, myChannelId, myClientId) =>
             {
-                _currentChannelId = myChannelId;
-                _myClientId = myClientId;
-                _allUsers = allUsers;
-
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    RefreshUserList();
-                    Console.WriteLine($"[UI] 初始化列表，我的ID: {_myClientId}, 频道: {_currentChannelId}, 人数: {Users.Count}");
+                    // If we already have the same identity, this is a refresh to update usernames
+                    if (_myClientId != 0 && _myClientId == myClientId && _currentChannelId == myChannelId)
+                    {
+                        // Update existing users' names from auth response
+                        foreach (var authUser in allUsers)
+                        {
+                            var cachedUser = _allUsers.FirstOrDefault(u => u.ClientId == authUser.ClientId);
+                            if (cachedUser != null)
+                            {
+                                cachedUser.Name = authUser.Name;
+                                cachedUser.ChannelId = authUser.ChannelId;
+                                cachedUser.IsTalking = authUser.IsTalking;
+                            }
+                            else
+                            {
+                                // Add missing users
+                                _allUsers.Add(authUser);
+                            }
+                        }
 
-                    // 显示连接成功通知
-                    ShowNotification("已连接到 TeamSpeak", "#43B581", "✅");
+                        RefreshUserList();
+                    }
+                    else
+                    {
+                        // Initial connection - replace entire list
+                        _currentChannelId = myChannelId;
+                        _myClientId = myClientId;
+                        _allUsers = allUsers;
+
+                        RefreshUserList();
+                        Console.WriteLine(
+                            $"[UI] 初始化列表，我的ID: {_myClientId}, 频道: {_currentChannelId}, 人数: {Users.Count}");
+
+                        ShowNotification("已连接到 TeamSpeak", "#43B581", "✅");
+                    }
                 });
             };
 
@@ -78,37 +145,62 @@ namespace TS6_SpeakerOverlay.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // 更新缓存中的用户频道ID
                     var cachedUser = _allUsers.FirstOrDefault(u => u.ClientId == clientId);
-                    if (cachedUser != null)
+                    if (cachedUser == null)
+                    {
+                        cachedUser = new User
+                        {
+                            ClientId = clientId,
+                            Name = "加载中...",
+                            ChannelId = newChannelId,
+                            IsTalking = false
+                        };
+                        _allUsers.Add(cachedUser);
+                    }
+                    else
                     {
                         cachedUser.ChannelId = newChannelId;
                     }
 
-                    // 如果是我自己切换了频道
-                    if (clientId == _myClientId)
+                    // Auto-detect identity when reconnecting: first user to non-0 channel is likely me
+                    if ((_currentChannelId == "0" || _currentChannelId == "" || _myClientId == 0)
+                        && newChannelId != "0"
+                        && _allUsers.Count <= 2)
+                    {
+                        _myClientId = clientId;
+                        _currentChannelId = newChannelId;
+                        RefreshUserList();
+                        ShowNotification($"已重新连接，当前 {Users.Count} 人", "#43B581", "✅");
+                        return;
+                    }
+
+                    // Handle my own channel changes
+                    if (_myClientId != 0 && clientId == _myClientId)
                     {
                         _currentChannelId = newChannelId;
                         RefreshUserList();
-                        Console.WriteLine($"[UI] 我切换到频道: {newChannelId}, 人数: {Users.Count}");
 
-                        // 显示频道切换通知
-                        ShowNotification($"已切换频道，当前 {Users.Count} 人", "#5E5CE6", "🔄");
+                        if (newChannelId == "0")
+                        {
+                            ShowNotification("已断开服务器连接", "#F04747", "📤");
+                        }
+                        else
+                        {
+                            ShowNotification($"已切换频道，当前 {Users.Count} 人", "#5E5CE6", "🔄");
+                        }
                     }
                     else
                     {
-                        // 其他用户切换频道
+                        // Handle other users' channel changes
                         var wasInMyChannel = Users.Any(u => u.ClientId == clientId);
                         RefreshUserList();
                         var isNowInMyChannel = Users.Any(u => u.ClientId == clientId);
 
-                        // 用户进入我的频道
-                        if (!wasInMyChannel && isNowInMyChannel && cachedUser != null)
+                        if (!wasInMyChannel && isNowInMyChannel)
                         {
                             ShowNotification($"{cachedUser.Name} 加入了频道", "#43B581", "📥");
                         }
-                        // 用户离开我的频道
-                        else if (wasInMyChannel && !isNowInMyChannel && cachedUser != null)
+                        else if (wasInMyChannel && !isNowInMyChannel)
                         {
                             ShowNotification($"{cachedUser.Name} 离开了频道", "#F04747", "📤");
                         }
@@ -124,9 +216,7 @@ namespace TS6_SpeakerOverlay.ViewModels
                     if (_allUsers.All(u => u.ClientId != newUser.ClientId))
                     {
                         _allUsers.Add(newUser);
-                        Console.WriteLine($"[UI] 新用户 {newUser.Name} 进入视野 (频道: {newUser.ChannelId})");
 
-                        // 如果新用户在我的频道，显示通知
                         if (newUser.ChannelId == _currentChannelId)
                         {
                             ShowNotification($"{newUser.Name} 加入了频道", "#43B581", "📥");
@@ -145,17 +235,31 @@ namespace TS6_SpeakerOverlay.ViewModels
                     var cachedUser = _allUsers.FirstOrDefault(u => u.ClientId == clientId);
                     if (cachedUser != null)
                     {
-                        // 如果用户在我的频道，显示离开通知
                         if (cachedUser.ChannelId == _currentChannelId)
                         {
                             ShowNotification($"{cachedUser.Name} 离开了频道", "#F04747", "📤");
                         }
 
                         _allUsers.Remove(cachedUser);
-                        Console.WriteLine($"[UI] 用户 {cachedUser.Name} 离开视野");
                     }
 
                     RefreshUserList();
+                });
+            };
+
+            // 订阅事件：用户属性更新
+            _tsService.OnClientPropertiesUpdated += (clientId, nickname) =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var cachedUser = _allUsers.FirstOrDefault(u => u.ClientId == clientId);
+                    if (cachedUser != null)
+                    {
+                        cachedUser.Name = nickname;
+
+                        var displayedUser = Users.FirstOrDefault(u => u.ClientId == clientId);
+                        displayedUser?.Name = nickname;
+                    }
                 });
             };
 
@@ -194,21 +298,25 @@ namespace TS6_SpeakerOverlay.ViewModels
         /// </summary>
         private async void ShowNotification(string message, string color, string icon)
         {
-            var notification = new Notification
+            try
             {
-                Message = message,
-                Color = color,
-                Icon = icon
-            };
+                var notification = new Notification
+                {
+                    Message = message,
+                    Color = color,
+                    Icon = icon
+                };
 
-            Notifications.Add(notification);
+                Notifications.Add(notification);
 
-            // 3秒后自动移除通知
-            await Task.Delay(3000);
+                // 3秒后自动移除通知
+                await Task.Delay(3000);
 
-            if (Notifications.Contains(notification))
-            {
                 Notifications.Remove(notification);
+            }
+            catch (Exception)
+            {
+                // suppress
             }
         }
     }
