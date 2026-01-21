@@ -1,16 +1,15 @@
-using System.IO;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Websocket.Client;
 using TS6_SpeakerOverlay.Models;
+using TS6_SpeakerOverlay.Helpers;
 
 namespace TS6_SpeakerOverlay.Services
 {
     public class Ts6Service
     {
         private const string Url = "ws://127.0.0.1:5899";
-        private const string KeyFile = "apikey.txt";
         private readonly WebsocketClient _client;
         private string _savedApiKey = "";
 
@@ -48,10 +47,10 @@ namespace TS6_SpeakerOverlay.Services
 
         private void LoadApiKey()
         {
-            if (File.Exists(KeyFile))
+            var key = ConfigHelper.LoadApiKey();
+            if (key != null)
             {
-                _savedApiKey = File.ReadAllText(KeyFile).Trim();
-                Console.WriteLine($"[Config] 读取到保存的 Key: {_savedApiKey}");
+                _savedApiKey = key;
             }
         }
 
@@ -112,12 +111,15 @@ namespace TS6_SpeakerOverlay.Services
             if (payload == null) return;
 
             // 保存 API Key
-            var newKey = payload["apiKey"]?.ToString();
-            if (!string.IsNullOrEmpty(newKey) && newKey != _savedApiKey)
+            var apiKeyNode = payload["apiKey"];
+            if (apiKeyNode != null)
             {
-                _savedApiKey = newKey;
-                File.WriteAllText(KeyFile, newKey);
-                Console.WriteLine("[Auth] ✅ 新 Key 已保存");
+                var newKey = apiKeyNode.ToString();
+                if (!string.IsNullOrEmpty(newKey) && newKey != _savedApiKey)
+                {
+                    _savedApiKey = newKey;
+                    ConfigHelper.SaveApiKey(newKey);
+                }
             }
 
             // 解析连接信息
