@@ -1,4 +1,4 @@
-name: Publish Windows (Dual Mode)
+name: Publish Windows (Single EXE)
 
 on:
   workflow_dispatch:
@@ -12,21 +12,12 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.rid }} (${{ matrix.mode }})
+    name: Build ${{ matrix.rid }} (Single File)
     runs-on: windows-latest
     strategy:
       matrix:
-        # 组合：架构 x 模式
+        # 只构建 Windows x64 和 ARM64
         rid: [win-x64, win-arm64]
-        self_contained: [true, false]
-        include:
-          # 为每种模式定义友好的标签，用于文件名
-          - self_contained: true
-            mode: "self-contained"
-            suffix: "full"  # 完整版后缀
-          - self_contained: false
-            mode: "framework-dependent"
-            suffix: "portable" # 便携版后缀
 
     steps:
       - name: Checkout Code
@@ -42,25 +33,27 @@ jobs:
           dotnet publish ${{ env.PROJECT_PATH }} `
             -c Release `
             -r ${{ matrix.rid }} `
-            --self-contained ${{ matrix.self_contained }} `
+            --self-contained true `
             -p:PublishSingleFile=true `
-            -p:PublishReadyToRun=${{ matrix.self_contained }} `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishReadyToRun=true `
             -p:DebugType=None `
             -p:DebugSymbols=false `
             -p:AssemblyName=${{ env.BINARY_NAME }} `
             -o ./publish_output
 
-      # 打包成 ZIP
-      # 文件名格式例如：TS6-SpeakerOverlay-win-x64-full.zip
-      - name: Zip Build Output
+      # 将生成的 exe 重命名（加上架构后缀）并移动到根目录
+      # 例如：TS6-SpeakerOverlay.exe -> TS6-SpeakerOverlay-win-x64.exe
+      - name: Rename and Move Executable
         run: |
-          Compress-Archive -Path ./publish_output/* -DestinationPath ${{ env.BINARY_NAME }}-${{ matrix.rid }}-${{ matrix.suffix }}.zip
+          Move-Item -Path ./publish_output/${{ env.BINARY_NAME }}.exe -Destination ./${{ env.BINARY_NAME }}-${{ matrix.rid }}.exe
 
+      # 直接上传 exe 文件，不打包 zip
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.rid }}-${{ matrix.suffix }}
-          path: ${{ env.BINARY_NAME }}-${{ matrix.rid }}-${{ matrix.suffix }}.zip
+          name: build-${{ matrix.rid }}
+          path: ${{ env.BINARY_NAME }}-${{ matrix.rid }}.exe
 
   release:
     if: startsWith(github.ref, 'refs/tags/') # 仅在 tag 触发时才创建 Release
@@ -74,9 +67,10 @@ jobs:
         with:
           path: ./artifacts
 
+      # 自动抓取 artifacts 文件夹下所有的 exe 并发布
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./artifacts/**/*.zip
+            ./artifacts/**/*.exe
           generate_release_notes: true
