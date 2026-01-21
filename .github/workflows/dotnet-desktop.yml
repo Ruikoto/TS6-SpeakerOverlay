@@ -23,6 +23,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 提取版本号
+      - name: Get Version Name
+        id: version
+        run: |
+          $ver = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "dev-build" }
+          echo "VERSION_TAG=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
@@ -42,18 +49,18 @@ jobs:
             -p:AssemblyName=${{ env.BINARY_NAME }} `
             -o ./publish_output
 
-      # 将生成的 exe 重命名（加上架构后缀）并移动到根目录
-      # 例如：TS6-SpeakerOverlay.exe -> TS6-SpeakerOverlay-win-x64.exe
+      # 将生成的 exe 重命名（加上版本号和架构后缀）并移动到根目录
+      # 例如：TS6-SpeakerOverlay.exe -> TS6-SpeakerOverlay-v1.0.0-win-x64.exe
       - name: Rename and Move Executable
         run: |
-          Move-Item -Path ./publish_output/${{ env.BINARY_NAME }}.exe -Destination ./${{ env.BINARY_NAME }}-${{ matrix.rid }}.exe
+          Move-Item -Path ./publish_output/${{ env.BINARY_NAME }}.exe -Destination ./${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}.exe
 
-      # 直接上传 exe 文件，不打包 zip
+      # 直接上传 exe 文件
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.rid }}
-          path: ${{ env.BINARY_NAME }}-${{ matrix.rid }}.exe
+          path: ${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}.exe
 
   release:
     if: startsWith(github.ref, 'refs/tags/') # 仅在 tag 触发时才创建 Release
