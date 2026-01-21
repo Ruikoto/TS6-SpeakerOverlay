@@ -1,0 +1,137 @@
+name: Publish .NET 10 Multi-Arch
+
+on:
+  push:
+    tags:
+      - 'v*' # 只有打 v1.0.0 这种标签时才触发发布流程
+
+env:
+  PROJECT_PATH: "TS6-SpeakerOverlay/TS6-SpeakerOverlay.csproj"
+  BINARY_NAME: "TSSO"
+
+jobs:
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Windows
+          - os: windows-latest
+            rid: win-x64
+          - os: windows-latest
+            rid: win-arm64
+          # Linux
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+          # macOS
+          - os: macos-latest
+            rid: osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishReadyToRun=true \
+            -p:DebugType=None \
+            -p:DebugSymbols=false \
+            -o ./publish_output
+
+      # Linux/macOS 需要赋予执行权限
+      - name: Fix Permissions (Unix)
+        if: runner.os != 'Windows'
+        run: chmod +x ./publish_output/${{ env.BINARY_NAME }}
+
+      # 打包成 ZIP
+      - name: Zip Build Output
+        shell: bash
+        run: |
+          cd publish_output
+          zip -r ../${{ env.BINARY_NAME }}-${{ matrix.rid }}.zip ./*
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.rid }}
+          path: ${{ env.BINARY_NAME }}-${{ matrix.rid }}.zip
+
+  # 🔥 新增：专门处理 macOS Universal Binary 的任务
+  package-macos-universal:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - name: Download x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-osx-x64
+          path: ./x64_zip
+      
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-osx-arm64
+          path: ./arm64_zip
+
+      - name: Create Universal Binary
+        run: |
+          # 解压
+          unzip ./x64_zip/*.zip -d ./x64_content
+          unzip ./arm64_zip/*.zip -d ./arm64_content
+          
+          mkdir -p ./universal_content
+          
+          # 1. 复制所有资源文件（假设除了二进制文件外，其他资源是一样的）
+          cp -R ./x64_content/* ./universal_content/
+          
+          # 2. 使用 lipo 合并二进制文件
+          lipo -create \
+            ./x64_content/${{ env.BINARY_NAME }} \
+            ./arm64_content/${{ env.BINARY_NAME }} \
+            -output ./universal_content/${{ env.BINARY_NAME }}
+            
+          # 3. 验证合并结果
+          lipo -info ./universal_content/${{ env.BINARY_NAME }}
+          
+          # 4. 打包 Universal 版本
+          cd universal_content
+          zip -r ../${{ env.BINARY_NAME }}-osx-universal.zip ./*
+
+      - name: Upload Universal Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-osx-universal
+          path: ${{ env.BINARY_NAME }}-osx-universal.zip
+
+  release:
+    needs: [build, package-macos-universal]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/**/*.zip
+          generate_release_notes: true
