@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_PATH: "TS6-SpeakerOverlay/TS6-SpeakerOverlay.csproj"
-  BINARY_NAME: "TSSO"
+  BINARY_NAME: "TS6-SpeakerOverlay"
 
 jobs:
   build:
