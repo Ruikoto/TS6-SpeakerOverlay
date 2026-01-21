@@ -39,10 +39,14 @@
 ### 📸 界面预览
 
 <table>
-  <tr>
-    <td width="33%"><img src="Assets/Screenshot1.png" alt="Screenshot 1"/></td>
-    <td width="33%"><img src="Assets/Screenshot2.png" alt="Screenshot 2"/></td>
-    <td width="33%"><img src="Assets/Screenshot3.png" alt="Screenshot 3"/></td>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot1.png" alt="Screenshot 1"/></td>
+  </tr>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot2.png" alt="Screenshot 2"/></td>
+  </tr>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot3.png" alt="Screenshot 3"/></td>
   </tr>
 </table>
 
@@ -79,10 +83,14 @@ MIT License
 ### 📸 Preview
 
 <table>
-  <tr>
-    <td width="33%"><img src="Assets/Screenshot1.png" alt="Screenshot 1"/></td>
-    <td width="33%"><img src="Assets/Screenshot2.png" alt="Screenshot 2"/></td>
-    <td width="33%"><img src="Assets/Screenshot3.png" alt="Screenshot 3"/></td>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot1.png" alt="Screenshot 1"/></td>
+  </tr>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot2.png" alt="Screenshot 2"/></td>
+  </tr>
+  <tr align="Center">
+    <td><img src="Assets/Screenshot3.png" alt="Screenshot 3"/></td>
   </tr>
 </table>
 
