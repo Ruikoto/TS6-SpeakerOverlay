@@ -12,23 +12,31 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.rid }} (Single File)
+    name: Build ${{ matrix.rid }} (${{ matrix.self_contained == true && 'Full' || 'Lite' }})
     runs-on: windows-latest
     strategy:
       matrix:
-        # 只构建 Windows x64 和 ARM64
+        # 组合：架构 x 是否自包含
         rid: [win-x64, win-arm64]
+        self_contained: [true, false] # true=大包(自带环境), false=小包(依赖环境)
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 提取版本号
+      # 1. 提取版本号
       - name: Get Version Name
         id: version
         run: |
           $ver = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "dev-build" }
           echo "VERSION_TAG=$ver" >> $env:GITHUB_OUTPUT
+
+      # 2. 计算文件名后缀 (大包无后缀，小包加 -dependent)
+      - name: Get File Suffix
+        id: suffix
+        run: |
+          $suf = if ("${{ matrix.self_contained }}" -eq "true") { "" } else { "-dependent" }
+          echo "FILE_SUFFIX=$suf" >> $env:GITHUB_OUTPUT
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
@@ -37,33 +45,37 @@ jobs:
 
       - name: Publish
         run: |
+          # 只有自包含版本才启用 ReadyToRun (R2R会增加体积，对小包没必要)
+          $r2r = "${{ matrix.self_contained }}"
+          
           dotnet publish ${{ env.PROJECT_PATH }} `
             -c Release `
             -r ${{ matrix.rid }} `
-            --self-contained true `
+            --self-contained ${{ matrix.self_contained }} `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:PublishReadyToRun=true `
+            -p:PublishReadyToRun=$r2r `
             -p:DebugType=None `
             -p:DebugSymbols=false `
             -p:AssemblyName=${{ env.BINARY_NAME }} `
             -o ./publish_output
 
-      # 将生成的 exe 重命名（加上版本号和架构后缀）并移动到根目录
-      # 例如：TS6-SpeakerOverlay.exe -> TS6-SpeakerOverlay-v1.0.0-win-x64.exe
+      # 3. 重命名并移动 (格式: Name-Version-Arch-Type.exe)
       - name: Rename and Move Executable
         run: |
-          Move-Item -Path ./publish_output/${{ env.BINARY_NAME }}.exe -Destination ./${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}.exe
+          $src = "./publish_output/${{ env.BINARY_NAME }}.exe"
+          $dest = "./${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}${{ steps.suffix.outputs.FILE_SUFFIX }}.exe"
+          Move-Item -Path $src -Destination $dest
 
-      # 直接上传 exe 文件
+      # 4. 上传
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.rid }}
-          path: ${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}.exe
+          name: build-${{ matrix.rid }}${{ steps.suffix.outputs.FILE_SUFFIX }}
+          path: ./*.exe
 
   release:
-    if: startsWith(github.ref, 'refs/tags/') # 仅在 tag 触发时才创建 Release
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -74,7 +86,6 @@ jobs:
         with:
           path: ./artifacts
 
-      # 自动抓取 artifacts 文件夹下所有的 exe 并发布
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
