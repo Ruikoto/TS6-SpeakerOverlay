@@ -5,29 +5,88 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:TS6_SpeakerOverlay.ViewModels"
         mc:Ignorable="d"
-        Title="TS6 Overlay" Height="450" Width="300"
+        Title="TS6 Overlay"
+        Height="Auto"
+        MinHeight="80"
+        Width="300"
+        SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        FontFamily="Microsoft YaHei">
 
     <!-- 绑定 ViewModel -->
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
 
-
-    <Grid>
+    <Grid x:Name="MainGrid" Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- 工具栏：拖拽和锁定按钮 -->
+        <StackPanel x:Name="ToolBar" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,5,5,0">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Opacity" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsOverlayLocked}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsOverlayLocked}" Value="False"/>
+                                <Condition Binding="{Binding ElementName=MainGrid, Path=IsMouseOver}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Opacity" Value="1"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <!-- 拖拽按钮 -->
+            <Border x:Name="DragHandle"
+                    Background="#AA000000" CornerRadius="5" Padding="8,4" Margin="0,0,5,0"
+                    BorderThickness="1" BorderBrush="#33FFFFFF"
+                    Cursor="SizeAll"
+                    MouseLeftButtonDown="DragHandle_MouseDown"
+                    ToolTip="拖拽移动窗口">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⣿" Foreground="#FFAB53" FontSize="14" FontWeight="Bold" Margin="0,0,5,0"/>
+                    <TextBlock Text="拖拽" Foreground="#FFAB53" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 锁定按钮 -->
+            <Border Background="#AA000000" CornerRadius="5" Padding="8,4"
+                    BorderThickness="1" BorderBrush="#33FFFFFF"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="LockButton_Click"
+                    ToolTip="点击锁定并启用鼠标穿透">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#CC000000"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🔒" Foreground="#4FCD8E" FontSize="14" FontWeight="Bold" Margin="0,0,5,0"/>
+                    <TextBlock Text="锁定" Foreground="#4FCD8E" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
         <!-- 通知区域 -->
-        <ItemsControl ItemsSource="{Binding Notifications}" Grid.Row="0" Margin="5 5 5 0">
+        <ItemsControl ItemsSource="{Binding Notifications}" Grid.Row="1" Margin="5,0">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel VerticalAlignment="Top"/>
@@ -35,61 +94,53 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Background="#D9000000" CornerRadius="6" Margin="0,2" Padding="12,6" BorderThickness="1" BorderBrush="#33FFFFFF">
+                    <Border Background="#D9000000" CornerRadius="6" Margin="0,2,0,0" Padding="12,6" BorderThickness="1" BorderBrush="#33FFFFFF">
                         <Border.Triggers>
-                            <!-- 渐入动画 -->
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.25"/>
-                                        <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,-10,0,2" To="0,2,0,2" Duration="0:0:0.25" DecelerationRatio="0.9"/>
+                                        <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,-10,0,0" To="0,2,0,0" Duration="0:0:0.25" DecelerationRatio="0.9"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
                         </Border.Triggers>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding Icon}" Foreground="{Binding Color}" FontSize="16" Margin="0,0,8,0" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding Message}" Foreground="White" FontSize="13" FontWeight="Medium" FontFamily="Segoe UI"/>
+                            <TextBlock Text="{Binding Message}" Foreground="White" FontSize="13" FontWeight="Medium"/>
                         </StackPanel>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- 背景层：解锁时显示微弱黑色，锁定(穿透)时全透明 -->
-        <Border Grid.Row="1" Background="#01000000" CornerRadius="10">
-            <!-- 用户列表 -->
-            <ItemsControl ItemsSource="{Binding Users}" Margin="5">
+        <!-- 用户列表 -->
+        <Border Grid.Row="2" Background="#01000000" CornerRadius="10">
+            <ItemsControl ItemsSource="{Binding Users}" Margin="5,2,5,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border x:Name="UserCard" 
-                                Background="#99000000" 
-                                CornerRadius="5" 
-                                Margin="0,2" 
+                        <Border x:Name="UserCard"
+                                Background="#99000000"
+                                CornerRadius="5"
+                                Margin="0,2"
                                 Padding="10,5"
                                 BorderThickness="2"
                                 BorderBrush="Transparent"
                                 HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
-                                <!-- 状态指示灯 -->
                                 <Ellipse x:Name="StatusLight" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
-                                <!-- 名字 -->
-                                <TextBlock Text="{Binding Name}" 
-                                           Foreground="White" 
-                                           FontSize="14" 
-                                           FontWeight="Bold"
-                                           FontFamily="Segoe UI"/>
+                                <TextBlock Text="{Binding Name}"
+                                           Foreground="White"
+                                           FontSize="14"
+                                           FontWeight="Bold"/>
                             </StackPanel>
                         </Border>
 
                         <DataTemplate.Triggers>
-                            <!-- 说话状态：高亮 -->
                             <DataTrigger Binding="{Binding IsTalking}" Value="True">
                                 <Setter TargetName="UserCard" Property="BorderBrush" Value="#4FCD8E"/>
                                 <Setter TargetName="StatusLight" Property="Fill" Value="#4FCD8E"/>
                             </DataTrigger>
-                            
-                            <!-- 没说话：半透明 -->
                             <DataTrigger Binding="{Binding IsTalking}" Value="False">
                                 <Setter TargetName="UserCard" Property="Opacity" Value="0.5"/>
                                 <Setter TargetName="UserCard" Property="BorderBrush" Value="Transparent"/>
@@ -98,22 +149,6 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </Border>
-
-        <!-- 提示文本 -->
-        <Border Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                Background="#AA000000" CornerRadius="5" Padding="5" Margin="5 5 5 0">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsOverlayLocked}" Value="False">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <TextBlock Text="[解锁模式] 拖拽调整位置 | 按 Ctrl+L 锁定并穿透" Foreground="#FFAB53"/>
         </Border>
     </Grid>
 </Window>

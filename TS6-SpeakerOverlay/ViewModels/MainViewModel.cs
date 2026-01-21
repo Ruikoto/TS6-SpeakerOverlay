@@ -28,6 +28,15 @@ namespace TS6_SpeakerOverlay.ViewModels
         {
             _tsService = new Ts6Service();
 
+            // 监听锁定状态变化
+            PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(IsOverlayLocked) && IsOverlayLocked)
+                {
+                    ShowNotification("已锁定，点击托盘图标可解锁", "#5E5CE6", "🔒");
+                }
+            };
+
             // 订阅事件：初始化用户列表
             _tsService.OnChannelListUpdated += (allUsers, myChannelId, myClientId) =>
             {

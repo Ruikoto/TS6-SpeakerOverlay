@@ -1,9 +1,10 @@
 ﻿using System.Windows;
 using System.Windows.Input;
-// 引用修正后的命名空间 (注意是下划线)
+using System.Windows.Media.Animation;
 using TS6_SpeakerOverlay.Helpers;
 using TS6_SpeakerOverlay.ViewModels;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace TS6_SpeakerOverlay
 {
@@ -13,33 +14,22 @@ namespace TS6_SpeakerOverlay
 
         public MainWindow()
         {
-            // 如果这里报错，请先无视，按照第三步操作"清理解决方案"即可修复
             InitializeComponent();
 
-            // 监听窗口加载
-            this.Loaded += MainWindow_Loaded;
-            
-            // 监听鼠标按下
-            this.MouseDown += MainWindow_MouseDown;
+            Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
+            KeyDown += MainWindow_KeyDown;
 
-            // 监听窗口关闭，防止直接退出
-            this.Closing += MainWindow_Closing;
-
-            // 监听键盘事件
-            this.KeyDown += MainWindow_KeyDown;
+            // 添加鼠标进入/离开事件来控制工具栏显示
+            MouseEnter += MainWindow_MouseEnter;
+            MouseLeave += MainWindow_MouseLeave;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // 1. 初始化位置 (例如左上角，或者屏幕中心)
-            this.Left = 100;
-            this.Top = 100;
+            Left = 100;
+            Top = 100;
 
-            // 2. 重要：这里不再强制调用 EnableClickThrough
-            // 我们让 ViewModel 的默认状态来决定是否穿透
-            // 目前 ViewModel 默认为 false (不锁定)，所以这里什么都不用做
-
-            // 3. 初始化托盘图标
             _trayIcon = new TrayIconHelper(
                 this,
                 GetIsLocked,
@@ -49,23 +39,48 @@ namespace TS6_SpeakerOverlay
             );
         }
 
-        private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e)
+        private void MainWindow_MouseEnter(object sender, MouseEventArgs e)
         {
-            // 只有按下左键，且 ViewModel 处于"未锁定"状态时，才允许拖动
-            if (e.ChangedButton == MouseButton.Left)
+            // 鼠标进入窗口区域时，淡入显示工具栏
+            if (DataContext is MainViewModel vm && !vm.IsOverlayLocked)
             {
-                // 获取当前的数据上下文
-                if (DataContext is MainViewModel vm)
-                {
-                    // 如果没有锁定 (IsOverlayLocked == false)，允许拖拽
-                    if (!vm.IsOverlayLocked)
-                    {
-                        // 这是一个系统方法，用于拖动无边框窗口
-                        this.DragMove();
-                    }
-                }
+                var storyboard = new Storyboard();
+                var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
+                Storyboard.SetTarget(fadeIn, ToolBar);
+                Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+                storyboard.Children.Add(fadeIn);
+                storyboard.Begin();
             }
         }
+
+        private void MainWindow_MouseLeave(object sender, MouseEventArgs e)
+        {
+            // 鼠标离开窗口区域时，淡出隐藏工具栏
+            var storyboard = new Storyboard();
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
+            Storyboard.SetTarget(fadeOut, ToolBar);
+            Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+            storyboard.Children.Add(fadeOut);
+            storyboard.Begin();
+        }
+
+        private void DragHandle_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 只有在拖拽按钮上按下左键时才允许拖动
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
+                e.Handled = true;
+            }
+        }
+
+        private void LockButton_Click(object sender, MouseButtonEventArgs e)
+        {
+            // 锁定按钮点击事件
+            Lock();
+            e.Handled = true;
+        }
+
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
@@ -87,7 +102,7 @@ namespace TS6_SpeakerOverlay
 
             // 阻止窗口关闭，改为隐藏
             e.Cancel = true;
-            this.Hide();
+            Hide();
             _trayIcon.UpdateTrayIcon();
         }
 
@@ -97,6 +112,7 @@ namespace TS6_SpeakerOverlay
             {
                 return vm.IsOverlayLocked;
             }
+
             return false;
         }
 
@@ -128,7 +144,7 @@ namespace TS6_SpeakerOverlay
                 Lock();
         }
 
-        protected override void OnClosed(System.EventArgs e)
+        protected override void OnClosed(EventArgs e)
         {
             _trayIcon?.Dispose();
             base.OnClosed(e);
