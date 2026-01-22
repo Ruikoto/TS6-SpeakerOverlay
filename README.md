@@ -1,6 +1,9 @@
 ﻿<div align="center">
 
-# TS6 Speaker Overlay
+<h1>
+  <img src="Assets/icon.png" alt="TS6 Speaker Overlay Icon" height="48" style="vertical-align: middle; margin-right: 10px; margin-bottom: 8px;">
+  TS6 Speaker Overlay
+</h1>
 
 **专为 TeamSpeak 6 打造，轻量、高性能的信息叠加层。**
 
