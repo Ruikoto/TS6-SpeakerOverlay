@@ -16,22 +16,19 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # 组合：架构 x 是否自包含
         rid: [win-x64, win-arm64]
-        self_contained: [true, false] # true=大包(自带环境), false=小包(依赖环境)
+        self_contained: [true, false]
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. 提取版本号
       - name: Get Version Name
         id: version
         run: |
           $ver = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "dev-build" }
           echo "VERSION_TAG=$ver" >> $env:GITHUB_OUTPUT
 
-      # 2. 计算文件名后缀 (大包无后缀，小包加 -dependent)
       - name: Get File Suffix
         id: suffix
         run: |
@@ -45,9 +42,7 @@ jobs:
 
       - name: Publish
         run: |
-          # 只有自包含版本才启用 ReadyToRun (R2R会增加体积，对小包没必要)
           $r2r = "${{ matrix.self_contained }}"
-          
           dotnet publish ${{ env.PROJECT_PATH }} `
             -c Release `
             -r ${{ matrix.rid }} `
@@ -60,14 +55,12 @@ jobs:
             -p:AssemblyName=${{ env.BINARY_NAME }} `
             -o ./publish_output
 
-      # 3. 重命名并移动 (格式: Name-Version-Arch-Type.exe)
       - name: Rename and Move Executable
         run: |
           $src = "./publish_output/${{ env.BINARY_NAME }}.exe"
           $dest = "./${{ env.BINARY_NAME }}-${{ steps.version.outputs.VERSION_TAG }}-${{ matrix.rid }}${{ steps.suffix.outputs.FILE_SUFFIX }}.exe"
           Move-Item -Path $src -Destination $dest
 
-      # 4. 上传
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -86,9 +79,52 @@ jobs:
         with:
           path: ./artifacts
 
+      # 🔥 核心步骤：生成 release_note.md
+      - name: Generate Release Notes
+        run: |
+          # 1. 定义基础变量
+          REPO="${{ github.repository }}"
+          TAG="${{ github.ref_name }}"
+          BASE_URL="https://github.com/$REPO/releases/download/$TAG"
+          NAME="${{ env.BINARY_NAME }}"
+          
+          # 2. 预判文件名 (必须与 build 步骤的命名逻辑完全一致)
+          # 格式: Name-Tag-Arch[-dependent].exe
+          FILE_X64_FULL="$NAME-$TAG-win-x64.exe"
+          FILE_X64_LITE="$NAME-$TAG-win-x64-dependent.exe"
+          FILE_ARM64_FULL="$NAME-$TAG-win-arm64.exe"
+          FILE_ARM64_LITE="$NAME-$TAG-win-arm64-dependent.exe"
+          
+          # 3. 写入 Markdown 内容到文件
+          cat <<EOF > release_note.md
+          ### 📥 下载指南 / Download Guide
+          
+          请选择你需要的版本。如果你不知道要下载哪个，请下载 👉 **[推荐版本 (Recommended)]($BASE_URL/$FILE_X64_FULL)** 👈。
+          *(此版本解压即用，无需安装任何环境)*
+          
+          | 架构 (Arch) | 自包含 (Self-Contained) <br> *(无需安装环境，体积大)* | 非自包含 (Framework-Dependent) <br> *(需要 .NET 10 运行时，体积小)* |
+          | :--- | :---: | :---: |
+          | **Windows x64** <br> *(绝大多数电脑)* | [**下载 / Download**]($BASE_URL/$FILE_X64_FULL) | [下载 / Download]($BASE_URL/$FILE_X64_LITE) |
+          | **Windows ARM64** <br> *(Surface Pro X, Mac VM)* | [**下载 / Download**]($BASE_URL/$FILE_ARM64_FULL) | [下载 / Download]($BASE_URL/$FILE_ARM64_LITE) |
+          
+          ---
+          
+          ### 🇺🇸 English Guide
+          
+          Please select the version you need. If you are unsure, download the **[Recommended Version]($BASE_URL/$FILE_X64_FULL)**.
+          
+          | Architecture | Self-Contained <br> *(No Runtime Required)* | Framework-Dependent <br> *(Requires .NET 10 Runtime)* |
+          | :--- | :---: | :---: |
+          | **Windows x64** | [**Download**]($BASE_URL/$FILE_X64_FULL) | [Download]($BASE_URL/$FILE_X64_LITE) |
+          | **Windows ARM64** | [**Download**]($BASE_URL/$FILE_ARM64_FULL) | [Download]($BASE_URL/$FILE_ARM64_LITE) |
+          
+          ---
+          EOF
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./artifacts/**/*.exe
-          generate_release_notes: true
+          body_path: release_note.md    # 使用刚才生成的文件作为内容
+          generate_release_notes: true  # 同时会在下方自动添加 ChangeLog
