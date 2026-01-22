@@ -100,23 +100,11 @@ jobs:
           ### 📥 下载指南 / Download Guide
           
           请选择你需要的版本。如果你不知道要下载哪个，请下载 👉 **[推荐版本 (Recommended)]($BASE_URL/$FILE_X64_FULL)** 👈。
-          *(此版本解压即用，无需安装任何环境)*
           
-          | 架构 (Arch) | 自包含 (Self-Contained) <br> *(无需安装环境，体积大)* | 非自包含 (Framework-Dependent) <br> *(需要 .NET 10 运行时，体积小)* |
+          | 架构 (Arch) | 自包含 (Self-Contained) <br> *(无需运行环境，体积稍大)* | 非自包含 (Framework-Dependent) <br> *(需要 .NET 10 运行时，体积小)* |
           | :--- | :---: | :---: |
           | **Windows x64** <br> *(绝大多数电脑)* | [**下载 / Download**]($BASE_URL/$FILE_X64_FULL) | [下载 / Download]($BASE_URL/$FILE_X64_LITE) |
           | **Windows ARM64** <br> *(Surface Pro X, Mac VM)* | [**下载 / Download**]($BASE_URL/$FILE_ARM64_FULL) | [下载 / Download]($BASE_URL/$FILE_ARM64_LITE) |
-          
-          ---
-          
-          ### 🇺🇸 English Guide
-          
-          Please select the version you need. If you are unsure, download the **[Recommended Version]($BASE_URL/$FILE_X64_FULL)**.
-          
-          | Architecture | Self-Contained <br> *(No Runtime Required)* | Framework-Dependent <br> *(Requires .NET 10 Runtime)* |
-          | :--- | :---: | :---: |
-          | **Windows x64** | [**Download**]($BASE_URL/$FILE_X64_FULL) | [Download]($BASE_URL/$FILE_X64_LITE) |
-          | **Windows ARM64** | [**Download**]($BASE_URL/$FILE_ARM64_FULL) | [Download]($BASE_URL/$FILE_ARM64_LITE) |
           
           ---
           EOF
